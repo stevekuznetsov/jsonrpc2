@@ -205,7 +205,7 @@ func (s *stream) Write(ctx context.Context, msg Message) (int64, error) {
 		return 0, fmt.Errorf("marshaling message: %w", err)
 	}
 
-	n, err := fmt.Fprintf(s.conn, "%s: %v%s", HdrContentLength, len(data), HdrContentSeparator)
+	n, err := fmt.Fprintf(s.conn, "%s: %v%s", HdrContentLength, len(data) + 4, HdrContentSeparator)
 	total := int64(n)
 	if err != nil {
 		return 0, fmt.Errorf("write data to conn: %w", err)
@@ -217,6 +217,11 @@ func (s *stream) Write(ctx context.Context, msg Message) (int64, error) {
 		return 0, fmt.Errorf("write data to conn: %w", err)
 	}
 
+	n, err = s.conn.Write([]byte(HdrContentSeparator))
+	total += int64(n)
+	if err != nil {
+		return 0, fmt.Errorf("write postfix separator to conn: %w", err)
+	}
 	return total, nil
 }
 
